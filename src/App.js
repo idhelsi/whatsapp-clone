@@ -1,16 +1,25 @@
-import React, { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 
+import { ChatListItem } from './Components/ChatListItem';
+import { ChatIntro } from './Components/ChatIntro';
+import { ChatWindow } from './Components/ChatWindow';
 
 import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import ChatIcon from '@mui/icons-material/Chat';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-import { ChatListItem } from './Components/ChatListItem';
 
 export const App = () => {
 
-  const [chatlist, setChatList] = useState([{},{},{},{}])
+  const [chatlist, setChatList] = useState([
+    {chatId: 1, title: 'Fulao de Tal', image: 'https://www.w3schools.com/howto/img_avatar2.png'},
+    {chatId: 2, title: 'Falcao Bueno', image: 'https://www.w3schools.com/howto/img_avatar2.png'},
+    {chatId: 3, title: 'Dila Telo', image: 'https://www.w3schools.com/howto/img_avatar2.png'},
+    {chatId: 4, title: 'Elbafo Matriarco', image: 'https://www.w3schools.com/howto/img_avatar2.png'}
+  ])
+
+  const [activeChat, setActiveChat] = useState({})
 
   return (
     <div className="app-window">
@@ -41,13 +50,21 @@ export const App = () => {
           {chatlist.map((item, key) => (
               <ChatListItem 
                 key={key}
+                data={item}
+                active={activeChat.chatId === chatlist[key].chatId}
+                onClick={()=>setActiveChat(chatlist[key])}
               />
           ))}
         </div>
 
       </div>
       <div className="contentarea">
-        ...
+        {activeChat.chatId !== undefined &&
+          <ChatWindow />
+        }
+        {activeChat.chatId === undefined &&
+          <ChatIntro />
+        }
       </div>
     </div>
   )
