@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import EmojiPicker from 'emoji-picker-react' // Corrigido nome do componente
 import './ChatWindow.css'
+
+import { MessagemItem } from './MessagemItem';
 
 import SearchIcon from '@mui/icons-material/Search';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -10,20 +12,108 @@ import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
 
-export const ChatWindow = () => {
-    const [emojiOpen, setEmojiOpen] = useState(false) // Corrigido nome da variável
-    const [altura, setAltura] = useState('0px') // Corrigido nome da variável
+export const ChatWindow = ({user}) => {
 
-    const handleEmojiClick = () => {}
+    const body = useRef()
+
+    let recognition = null;
+    let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition !== undefined) {
+        recognition = new SpeechRecognition();
+    }
+
+    const [emojiOpen, setEmojiOpen] = useState(false) // Corrigido nome da variável
+    const [emojiPx, setEmojiPx] = useState('0px') // Corrigido nome da variável
+    const [text, setText] = useState('')
+    const [listening, setListening] = useState(false)
+    const [list, setList] = useState([
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'},
+        { author: 1234, body: 'bla bla bla'},
+        { author: 123, body: 'bla bla'},
+        { author: 123, body: 'bla bla bla bla'}
+    ])
+
+    // useEffect(() => {
+    //     if(body.current.scrollHeight > body.current.offsetHeight) {
+    //         body.current.scrollTop = body.current.scrollHeight - body.current.offsetHeight
+    //     }
+    // }, [list])
+
+    // useEffect(() => {
+    //     if (body.current) { // Verifica se o elemento existe
+    //         if (body.current.scrollHeight > body.current.offsetHeight) {
+    //             body.current.scrollTop = body.current.scrollHeight - body.current.offsetHeight;
+    //         }
+    //     }
+    // }, [list]);
+    useEffect(() => {
+        if (!body.current) return;
+        
+        const chatBody = body.current;
+        chatBody.scrollTop = chatBody.scrollHeight - chatBody.offsetHeight;
+        console.log(body)
+    }, [list.length]); // Apenas quando um novo item for adicionado
+    
+
+    const handleEmojiClick = (e, emojiObject) => {
+        setText(text => text + e.emoji)
+    }
 
     const handleEmojiOpen = () => {
         setEmojiOpen(true)
-        setAltura('300px')
+        setEmojiPx('300px')
     }
 
     const handleCloseEmoji = () => {
         setEmojiOpen(false)
-        setAltura('0px')
+        setEmojiPx('0px')
+    }
+
+    const handleMicClick = () => {
+        if(recognition !== null) {
+
+            recognition.onstart =  () => {
+                setListening(true)
+            }
+            recognition.onend =  () => {
+                setListening(false)
+            }
+            recognition.onresult = (e) => {
+                setText( e.results[0][0].transcript )
+            }
+
+            recognition.start()
+        }
+    }
+
+    const handleSendClick = () => {
+
     }
 
     return (
@@ -47,7 +137,15 @@ export const ChatWindow = () => {
                 </div>
             </div>
 
-            <div className="chatWindow--body"></div>
+            <div ref={body} className="chatWindow--body">
+                {list.map((item, key) => (
+                    <MessagemItem
+                        key={key}
+                        data={item}
+                        user={user}
+                    />
+                ))}
+            </div>
 
             <div className="chatWindow--emojiarea">
                 <EmojiPicker 
@@ -55,8 +153,9 @@ export const ChatWindow = () => {
                     searchDisabled
                     skinTonesDisabled
                     width='auto'
-                    height={altura}
+                    height={emojiPx}
                     previewConfig={{ showPreview: false }}
+                    
                 />
             </div>
 
@@ -82,13 +181,22 @@ export const ChatWindow = () => {
                         type="text" 
                         className="chatWindow--input" 
                         placeholder='Digite uma mensagem'
+                        value={text}
+                        onChange={e=>setText(e.target.value)}
                     />
                 </div>
 
                 <div className="chatwindow-pos">
-                    <div className="chatWindow--btn">
-                        <SendIcon style={{ color: '#919191' }} />
-                    </div>
+                    {text === '' &&
+                        <div onClick={handleMicClick} className="chatWindow--btn">
+                            <MicIcon style={{ color: listening ? '#126ECE' : '#919191' }} />
+                        </div>
+                    }
+                    {text !== '' &&
+                        <div onClick={handleSendClick} className="chatWindow--btn">
+                            <SendIcon style={{ color: '#919191' }} />
+                        </div>
+                    }
                 </div>
             </div>
         </div>

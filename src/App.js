@@ -4,11 +4,14 @@ import './App.css'
 import { ChatListItem } from './Components/ChatListItem';
 import { ChatIntro } from './Components/ChatIntro';
 import { ChatWindow } from './Components/ChatWindow';
+import { NewChat } from './Components/NewChat';
+import { Login } from './Components/Login';
 
 import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import ChatIcon from '@mui/icons-material/Chat';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
+
 
 export const App = () => {
 
@@ -20,17 +23,43 @@ export const App = () => {
   ])
 
   const [activeChat, setActiveChat] = useState({})
+  const [user, setUser] = useState(null)
+
+  const [showNewChat, setShowNewChat] = useState(false)
+
+  const handleNewChat = () => {
+    setShowNewChat(true)
+  }
+
+  const handleLoginData = async (u) => {
+    let newUser = {
+      id: u.uid,
+      name: u.displayName,
+      avatar: u.photoURL
+    }
+    setUser(newUser);
+  }
+
+  if (user === null) {
+    return (<Login onReceive={handleLoginData} />)
+  } 
 
   return (
     <div className="app-window">
       <div className="sidebar">
+        <NewChat 
+          chatlist={chatlist}
+          user={user}
+          show={showNewChat}
+          setShow={setShowNewChat}
+        />
         <header>
-          <img className='header--avatar' src="https://www.w3schools.com/howto/img_avatar2.png" alt="" />
+          <img className='header--avatar' src={user.Avatar} alt="" />
           <div className="header--buttons">
             <div className="header--btn">
               <DonutLargeIcon style={{color: '#919191'}} />
             </div>
-            <div className="header--btn">
+            <div onClick={handleNewChat} className="header--btn">
               <ChatIcon style={{color: '#919191'}} />
             </div>
             <div className="header--btn">
@@ -60,7 +89,9 @@ export const App = () => {
       </div>
       <div className="contentarea">
         {activeChat.chatId !== undefined &&
-          <ChatWindow />
+          <ChatWindow 
+            user={user}
+          />
         }
         {activeChat.chatId === undefined &&
           <ChatIntro />
