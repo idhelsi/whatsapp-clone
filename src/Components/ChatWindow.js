@@ -11,8 +11,9 @@ import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
+import { api } from '../api';
 
-export const ChatWindow = ({user}) => {
+export const ChatWindow = ({user , data}) => {
 
     const body = useRef()
 
@@ -26,52 +27,15 @@ export const ChatWindow = ({user}) => {
     const [emojiPx, setEmojiPx] = useState('0px') // Corrigido nome da variável
     const [text, setText] = useState('')
     const [listening, setListening] = useState(false)
-    const [list, setList] = useState([
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'},
-        { author: 1234, body: 'bla bla bla'},
-        { author: 123, body: 'bla bla'},
-        { author: 123, body: 'bla bla bla bla'}
-    ])
+    const [list, setList] = useState([])
+    const [users, setUsers] = useState([])
 
-    // useEffect(() => {
-    //     if(body.current.scrollHeight > body.current.offsetHeight) {
-    //         body.current.scrollTop = body.current.scrollHeight - body.current.offsetHeight
-    //     }
-    // }, [list])
+    useEffect(() => {
+        setList([])
+        let unsub = api.onChatContent(data.chatId, setList, setUsers)
+        return unsub
+    }, [data.chatId])
 
-    // useEffect(() => {
-    //     if (body.current) { // Verifica se o elemento existe
-    //         if (body.current.scrollHeight > body.current.offsetHeight) {
-    //             body.current.scrollTop = body.current.scrollHeight - body.current.offsetHeight;
-    //         }
-    //     }
-    // }, [list]);
     useEffect(() => {
         if (!body.current) return;
         
@@ -112,16 +76,27 @@ export const ChatWindow = ({user}) => {
         }
     }
 
-    const handleSendClick = () => {
+    const handleInputKeyUp = (e) => {
+        if(e.keyCode === 13) {
+            handleSendClick()
+        }
+    }
 
+    const handleSendClick = () => {
+        if(text !== '') {
+            api.sendMessage(data, user.id, 'text', text, users)
+            setText('')
+            setEmojiOpen(false)
+            setEmojiPx('0px')
+        }
     }
 
     return (
         <div className="chatWindow">
             <div className="chatWindow--header">
                 <div className="chatWindow--headerinfo">
-                    <img className="chatWindow--avatar" src="https://www.w3schools.com/howto/img_avatar2.png" alt="" />
-                    <div className="chatWindow--name">DD tank</div>
+                    <img className="chatWindow--avatar" src={data.image} alt="" />
+                    <div className="chatWindow--name">{data.title}</div>
                 </div>
 
                 <div className="chatWindow--headerbuttons">
@@ -183,6 +158,7 @@ export const ChatWindow = ({user}) => {
                         placeholder='Digite uma mensagem'
                         value={text}
                         onChange={e=>setText(e.target.value)}
+                        onKeyUp={handleInputKeyUp}
                     />
                 </div>
 

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import './App.css'
+import { useEffect, useState } from 'react';
+import './App.css';
 
 import { ChatListItem } from './Components/ChatListItem';
 import { ChatIntro } from './Components/ChatIntro';
@@ -11,38 +11,59 @@ import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import ChatIcon from '@mui/icons-material/Chat';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-
+import { api } from './api';
 
 export const App = () => {
+  const [chatlist, setChatList] = useState([]);
+  const [activeChat, setActiveChat] = useState({});
+  const [user, setUser] = useState(null);
+  const [showNewChat, setShowNewChat] = useState(false);
 
-  const [chatlist, setChatList] = useState([
-    {chatId: 1, title: 'Fulao de Tal', image: 'https://www.w3schools.com/howto/img_avatar2.png'},
-    {chatId: 2, title: 'Falcao Bueno', image: 'https://www.w3schools.com/howto/img_avatar2.png'},
-    {chatId: 3, title: 'Dila Telo', image: 'https://www.w3schools.com/howto/img_avatar2.png'},
-    {chatId: 4, title: 'Elbafo Matriarco', image: 'https://www.w3schools.com/howto/img_avatar2.png'}
-  ])
+  useEffect(() => {
+    if (user?.id) {
+      const unsub = api.onChatList(user.id, setChatList);
+      return () => {
+        if (typeof unsub === "function") unsub();
+      };
+    }
+  }, [user]);
 
-  const [activeChat, setActiveChat] = useState({})
-  const [user, setUser] = useState(null)
-
-  const [showNewChat, setShowNewChat] = useState(false)
-
-  const handleNewChat = () => {
-    setShowNewChat(true)
-  }
+  // const handleNewChat = () => {
+  //   setShowNewChat(true);
+  // };
+  const handleNewChat = (newChatUser) => {
+    // Verifica se já existe um chat com esse usuário
+    const chatExists = chatlist.some(chat => chat.chatId === newChatUser.id);
+  
+    if (!chatExists) {
+      setShowNewChat(true);
+    } else {
+      // Se o chat já existir, ativa o chat existente
+      setActiveChat(chatlist.find(chat => chat.chatId === newChatUser.id));
+    }
+  };
+  
 
   const handleLoginData = async (u) => {
+    if (!u) return;
+
     let newUser = {
       id: u.uid,
       name: u.displayName,
       avatar: u.photoURL
+    };
+
+    try {
+      await api.addUser(newUser);
+      setUser(newUser);
+    } catch (error) {
+      console.error("Erro ao salvar usuário:", error);
     }
-    setUser(newUser);
-  }
+  };
 
   if (user === null) {
-    return (<Login onReceive={handleLoginData} />)
-  } 
+    return <Login onReceive={handleLoginData} />;
+  }
 
   return (
     <div className="app-window">
@@ -54,7 +75,7 @@ export const App = () => {
           setShow={setShowNewChat}
         />
         <header>
-          <img className='header--avatar' src={user.Avatar} alt="" />
+          <img className='header--avatar' src={user.avatar} alt="" />
           <div className="header--buttons">
             <div className="header--btn">
               <DonutLargeIcon style={{color: '#919191'}} />
@@ -77,28 +98,25 @@ export const App = () => {
 
         <div className="chatlist">
           {chatlist.map((item, key) => (
-              <ChatListItem 
-                key={key}
-                data={item}
-                active={activeChat.chatId === chatlist[key].chatId}
-                onClick={()=>setActiveChat(chatlist[key])}
-              />
+            <ChatListItem 
+              key={key}
+              data={item}
+              active={activeChat.chatId === item.chatId}
+              onClick={() => setActiveChat(item)}
+            />
           ))}
         </div>
-
       </div>
+
       <div className="contentarea">
-        {activeChat.chatId !== undefined &&
-          <ChatWindow 
-            user={user}
-          />
-        }
-        {activeChat.chatId === undefined &&
+        {activeChat.chatId ? (
+          <ChatWindow user={user} data={activeChat} />
+        ) : (
           <ChatIntro />
-        }
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
